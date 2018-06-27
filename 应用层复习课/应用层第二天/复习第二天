@@ -1,0 +1,272 @@
+IO
+
+标准IO  C库调用 移植性强  高级IO 有缓存
+行缓存   标准输出 stdout
+1k
+1.'\n'   2.缓存满了 3.程序正常退出  4.fflush
+
+全缓存   标准输入 stdin
+4k
+1.缓存满了  2.程序正常退出  3.fflush 4.关闭流
+
+无缓存   标准错误 stderr
+
+通过文件流指针对文件进行操作
+FILE *fopen(const char *path, const char *mode);
+r     检测文件是否存在
+r+
+w     会把文件清空,或者创建文件
+w+
+a     末尾追加或者创建文件
+a+
+
+FILE == struct _IO_FILE
+
+int fclose(FILE *fp);
+
+perror
+
+int fprintf(FILE *stream, const char *format, ...);
+int sprintf(char *str, const char *format, ...);
+int snprintf(char *str, size_t size, const char *format, ...);
+
+fgetc
+int fgetc(FILE *stream);
+EOF == -1      1.文件末尾  2.error
+
+判断是否为文件末尾
+feof
+int feof(FILE *stream);
+到文件末尾返回非0值
+
+fputc
+int fputc(int c, FILE *stream);
+
+fgets
+char *fgets(char *s, int size, FILE *stream);
+1.遇到'\n'停止输入
+2.在末尾自动加'\0'
+3.会把'\n'作为数据读入
+注:fgets  对'\0'不敏感  只能对文本文件操作,不能对图片问价操作
+
+fputs
+int fputs(const char *s, FILE *stream);
+
+fread
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+
+fwrite
+size_t fwrite(const void *ptr, size_t size, size_t nmemb,
+                     FILE *stream);
+读多少写多少
+
+bzero
+memset
+
+文件IO  系统调用  低级IO  无缓存(内核)
+
+文件描述符   非负整数,是一个索引,数组下标,数组内存放的是指向文件内容的结构体指针   0~1023
+
+0 标准输入   1 标准输出  2 标准错误
+
+open
+int open(const char *pathname, int flags); 访问时
+int open(const char *pathname, int flags, mode_t mode);  创建时    最终权限  mode & ~umask
+创建旗
+访问旗
+状态旗
+
+close
+int close(int fd);
+
+read
+ssize_t read(int fd, void *buf, size_t count);
+
+write
+ssize_t write(int fd, const void *buf, size_t count);
+
+进程
+
+创建    fork   exec
+
+调度
+
+执行
+
+消亡   exit
+void exit(int status); man 3   刷新缓存关闭流的功能 调用_exit   EXIT_SUCCESS 0    EXIT_FAILURE 1
+void _exit(int status); man 2   1.回收资源   2.托孤  3.发送SIGCHLD给父进程通知回收'尸体'
+
+wait
+pid_t wait(int *status);   1.阻塞等待  2.回收子进程资源  3.可以查看子进程退出信息
+
+pid_t waitpid(pid_t pid, int *status, int options);
+pid:
+-1  所有子进程
+0  与父进程同族的子进程
+>0  指定子进程
+
+WNOHANG:非阻塞选项
+0:阻塞
+
+1.signal
+2.父子孙      父生子   子生孙  子自杀  父回收  孙交给init
+
+注意:僵尸进程
+
+交互进程:
+前台:输入和输出   bg切换到后台
+后台:输出        fg切换前台
+
+守护进程:
+1.创建子进程,父进程退出,子进程交给init管理
+2.设置当前进程为会话组组长   setsid
+3.改变工作路径  chdir
+4.更改文件权限掩码
+5.关闭文件描述符   getdtablesize
+
+线程
+带有时间片的函数
+
+pthread_create   线程调用
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                          void *(*start_routine) (void *), void *arg);
+
+pthread_exit
+void pthread_exit(void *retval);     exit(int *statues)
+
+pthread_cancel
+int pthread_cancel(pthread_t thread);
+
+pthread_join
+int pthread_join(pthread_t thread, void **retval);
+阻塞等待子线程退出  类似wait
+接收子线程的退出信息
+
+互斥:
+同步:
+
+全局变量
+
+信号量
+sem_init
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+
+sem_post   v操作  +1
+int sem_post(sem_t *sem);
+
+sem_wait   p操作  -1
+int sem_wait(sem_t *sem);
+信号量为0阻塞等待直到这个值 > 0
+
+sem_destroy
+int sem_destroy(sem_t *sem);
+
+互斥锁
+pthread_mutex_init  初始化锁
+int pthread_mutex_init(pthread_mutex_t *restrict mutex,
+            const pthread_mutexattr_t *restrict attr);
+
+pthread_mutex_unlock   解锁
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+
+pthread_mutex_lock  上锁
+ int pthread_mutex_lock(pthread_mutex_t *mutex);
+
+
+pthread_mutex_destroy
+int pthread_mutex_destroy(pthread_mutex_t *mutex);
+
+条件变量
+pthread_cond_init
+int pthread_cond_init(pthread_cond_t *restrict cond,
+             const pthread_condattr_t *restrict attr);
+
+pthread_cond_signal
+int pthread_cond_signal(pthread_cond_t *cond);
+
+
+pthread_cond_broadcast
+int pthread_cond_broadcast(pthread_cond_t *cond);
+
+
+pthread_cond_wait    解锁  等待   上锁
+int pthread_cond_wait(pthread_cond_t *restrict cond,
+            pthread_mutex_t *restrict mutex);
+
+
+pthread_cond_destroy
+int pthread_cond_destroy(pthread_cond_t *cond);
+
+进程间通信
+无名管道
+通过文件描述符操作管道   64k    亲缘关系  父子  父孙
+pipe
+int pipe(int pipefd[2]);
+pipefd[0]  读端    pipefd[1]写端
+
+有名管道   借助vfs进行操作    创建的管道文件没有大小,在磁盘上没有存放
+mkfifo
+int mkfifo(const char *pathname, mode_t mode);
+
+信号默认处理方式:
+1.被忽略
+2.被捕获   signal
+3.默认方式处理   ctrl+c   ctrl+z
+4.被阻塞
+
+9,19  不能被忽略,捕获和阻塞
+
+信号:
+kill
+raise
+alarm
+pause
+
+signal   向内核注册信号 当收到指定信号时执行对应操作
+sighandler_t signal(int signum, sighandler_t handler);
+
+IPC
+ftok
+key_t ftok(const char *pathname, int proj_id);
+计算得到key值
+
+消息队列
+msgget
+int msgget(key_t key, int msgflg);   返回消息队列id
+IPC_CREATE  IPC_EXCL
+
+msgsnd
+int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
+struct mymsg {
+    long   mtype;       /* Message type. */
+    char   mtext[1];    /* Message text. */
+}
+
+msgrcv
+ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,
+                     int msgflg);
+
+msgctl
+int msgctl(int msqid, int cmd, struct msqid_ds *buf);
+IPC_RMID
+
+共享内存
+shmget
+int shmget(key_t key, size_t size, int shmflg);
+
+shmat
+void *shmat(int shmid, const void *shmaddr, int shmflg);
+
+同步:
+1.flag  放到共享内存中
+2.信号
+3.信号灯集
+
+shmdt
+
+
+信号灯集
+
+OSI七层  == TCP/IP

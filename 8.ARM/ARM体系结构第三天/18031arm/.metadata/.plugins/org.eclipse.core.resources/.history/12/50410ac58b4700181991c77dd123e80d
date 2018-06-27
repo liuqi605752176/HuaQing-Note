@@ -1,0 +1,39 @@
+
+
+.text
+.globl _start
+_start:
+	nop
+
+	ldrsb r2,data
+
+
+
+
+	ldr r0,c
+	ldrh r0,c
+	ldrb r0,c
+
+	ldr r0,a
+	ldr r1,b
+
+	add r0,r0,r1
+
+	str r0,a
+
+_stop:
+	b _stop
+
+a:
+	.word 10
+b:
+	.word 20
+
+c:
+	.word 0xffffffff
+data:
+	.byte -1
+	.byte -1
+	.byte -1
+	.byte -1
+

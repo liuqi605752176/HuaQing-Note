@@ -1,0 +1,240 @@
+【1】uboot移植的步骤
+    1、删除生成.o 文件
+	   make  distclean
+	2、添加交叉编译器
+     Makefile
+       ifeq  (arm,$(ARCH))	
+          CROSS_COMPILE=
+    3、配置uboot
+	   make  origen_config
+	   
+	4、make
+
+          u-boot         elf  调试
+          u-boot.bin   开发板上运行的可执行程序   objcopy  elf------>bin  
+          u-boot.lds   指定uboot的运行地址，入口
+          u-boot.map   uboot不同的代码放到不同的段中
+          System.map   uboot执行过程	
+		  
+【2】uboot的启动流程
+    arch/arm/cpu/armv7/start.S  
+	 
+    1、初始化异常向量表
+    2、设置cpu的工作模式，关中断
+    3、 关MMU,使能i-cache
+    4、初始化系统时钟
+    5、初始化内存
+    6、初始化串口
+    7、  bl  _main       arch/arm/lib/crt0.S
+	  设置栈（初始化c语言的运行环境）
+	8、清bss段(uboot的第一阶段（汇编）已经执行完成，跳转到第二阶段(c))
+         ldr pc, =board_init_r   /* this is auto-relocated! */	
+	        
+         	   arch/arm/lib/board.c
+ 	
+    9、初始化外设
+	         flash  串口  网卡  中断
+   		  
+	10、引导内核（bootcmd）
+	
+
+	*************************************************************************
+	_start:     arch/arm/cpu/armv7/start.S
+	       |
+		   |
+           | 		   
+	       b  reset      arch/arm/cpu/armv7/start.S
+		     |
+			 |  设置cpu的工作模式，关中断
+			 |
+			 |
+			 |
+		  bl  cpu_init_cp15	    arch/arm/cpu/armv7/start.S
+		      |   关MMU,使能i-cache 
+			  |
+              |		 
+		  bl  cpu_init_crit	   board/samsung/orgien/lowlevel_init.S
+               |    初始化系统时钟
+               |     初始化内存	
+               |     初始化串口 	
+			   | 		
+		  bl  _main   arch/arm/lib/crt0.S
+               |   设置栈（初始化c语言的运行环境）
+               |   清bss段
+               |
+             ldr pc, =board_init_r    arch/arm/lib/board.c
+               |
+               |   serial_initialize();
+               |     mmc_initialize(gd->bd);
+               |       console_init_r();   /* fully init console as a device */
+               |       interrupt_init();
+			   |		652     /* enable exceptions */
+			   | 		653     enable_interrupts(); 					 
+		  main_loop();   common/main.c 
+		       s = getenv ("bootdelay");  获取延时时间
+			     s = getenv ("bootcmd");  获取自启动命令
+				    判断是否有按键按下，没有运行bootcmd命令
+				     if (bootdelay != -1 && s && !abortboot(bootdelay)) ｛
+					       run_command_list(s, -1, 0);
+					 ｝ 
+		 setenv  bootcmd  tftp  410000000 uImage  \;tftp  42000000 exynos4412-fs4412.dtb  \;bootm  41000000 - 42000000
+		 
+
+【3】开发板如何启动
+    IROM:soc厂商固化的代码：  BL0
+	    作用：  
+		    1、关看门狗
+			2、关中断和MMU
+			3、关D-CACHE,使能I-CACHE 
+			4、初始化栈
+			5、获取复位状态
+			6、设置时钟
+			7、获取启动模式（SD/EMMC）
+			8、检查BL1镜像的完整性，对bl1镜像解密，如果成功，拷贝BL1到iram中运行，
+			    跳转到BL1
+				
+    BL1:加密文件
+       1、初始化中断，设置栈
+       2、BL1检查BL2镜像的完整性，如果成功，把BL2镜像拷贝到iram中运行，跳转到BL2
+    
+    BL2:
+       1、设置时钟
+       2、初始化DRAM
+       3、检查BL3镜像的完整性，如果成功，把BL3镜像拷贝到dram中运行，跳转到DRAM
+	   
+	
+    cat E4412_N.bl1.SCP2G.bin bl2.bin all00_padding.bin u-boot.bin tzsw_SMDK4412_SCP_2GB.bin > u-boot-fs4412.bin	
+
+
+【4】sd卡启动盘制作
+    https://www.linuxidc.com/Linux/2015-02/113493.htm
+	
+	 sd卡扇区
+	   https://blog.csdn.net/mjx91282041/article/details/8904705/
+	
+    sdb和sdb1的区别？
+     https://zhidao.baidu.com/question/1382124345913313060.html	 
+    		 
+    sdb1:第二个设备第一个主分区
+    sdb5：第二个设备第一个逻辑分区	
+
+【5】如何在uboot中自定义命令
+   1、在common目录下新建一个文件取名为cmd_hello.c
+   2、修改Makefile 
+          COBJS-y  +=cmd_hello.o
+   3、修改cmd_hello.c 
+        1 
+  2 #include <common.h>
+  3 #include <command.h>
+  4 
+  5 
+  6 static int do_hello(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+  7 {
+  8     printf("“no zuo no die\n");
+  9 
+ 10     return 0;
+ 11 }
+ 12 
+ 13 U_BOOT_CMD(
+ 14     hello,  2,  1,  do_hello,
+ 15     "helo hello hello hell ohello  hello ",                                                                
+ 16     "duang duang duang duang"
+ 17 );
+ 
+ make  
+ 
+   sudo  cp  u-boot.bin  /tftpboot
+   
+【6】网卡驱动的移植
+   U-Boot 2013.01 (May 04 2018 - 15:51:29) for hello   //include/configs/FS4412.h
+ 
+			CPU:    Exynos4412@1000MHz
+
+			Board: hello  							 //board/samsung/FS4412/origen.c
+			DRAM:  1 GiB
+			WARNING: Caches not enabled
+			MMC:   SAMSUNG SDHCI: 0
+			Card did not respond to voltage select!
+			MMC init failed
+			Using default environment
+
+			In:    serial
+			Out:   serial
+			Err:   serial
+			Net:   Net Initialization Skipped
+			No ethernet found.
+    出现错误的原因是：uboot没有识别到网卡。
+	  
+    grep  "Net Initialization Skipped"  *  ./*  -nR
+	
+			linux@ubuntu64-vm:~/2018-05-03/u-boot-2013.01$ grep  "Net Initialization Skipped"  *  ./*  -nR
+		Binary file net/eth.o matches
+		Binary file net/libnet.o matches
+		net/eth.c:319:          printf("Net Initialization Skipped\n");
+		Binary file u-boot matches
+		Binary file u-boot.bin matches
+		Binary file ./net/eth.o matches
+		Binary file ./net/libnet.o matches
+		./net/eth.c:319:                printf("Net Initialization Skipped\n");
+		Binary file ./u-boot matches
+		
+	 vi  net/eth.c  319 
+	    */
+312     if (board_eth_init != __def_eth_init) {                                                                
+313         if (board_eth_init(bis) < 0)
+314             printf("Board Net Initialization Failed\n");
+315     } else if (cpu_eth_init != __def_eth_init) {
+316         if (cpu_eth_init(bis) < 0)
+317             printf("CPU Net Initialization Failed\n");
+318     } else
+319         printf("Net Initialization Skipped\n");
+    发现board_eth_init  未实现，需要在board/samsung/fs4412/origen.c 实现
+	  参考  board/samsung/smdk2410/smdk2410.c
+  
+     vi board/samsung/fs4412/origen.c
+     6 #ifdef CONFIG_CMD_NET
+ 77 int board_eth_init(bd_t *bis)
+ 78 {
+ 79     int rc = 0;
+ 80 #ifdef CONFIG_DM9000
+ 81     rc = dm9000_initialize(bis);
+ 82 #endif
+ 83     return rc;                                                                                             
+ 84 }	
+
+  make  
+    出错
+	   dm9000_initialize(bis); 对应的.c  程序未编译
+	     这个函数对应的.c  dm9000x.c 
+             driver/net/Makefile		 
+		    38 COBJS-$(CONFIG_DRIVER_DM9000) += dm9000x.o  
+		 
+ 	CONFIG_DRIVER_DM9000  在include/configs/fs4412.h 定义
+	
+make  
+    出错
+	   DM9000_DATA  未定义
+	      参考include/configs/mini2440.h 
+		include/configs/fs4412.h  
+   98 #define CONFIG_DM9000_BASE              0x20000300
+ 99 #define DM9000_IO       CONFIG_DM9000_BASE                                                                 
+100 #define DM9000_DATA     (CONFIG_DM9000_BASE+4)    
+
+  make  
+  
+   sudo  cp  u-boot.bin  /tftpboot
+   死机
+  原因：CONFIG_DM9000_BASE 地址有问题
+
+   查看原理图：
+    BUF_Xm0cs1 ---->Xm0cs1--->  Xm0CSn1   
+  
+  SROM控制器：
+      srom由rom和ram组成,
+	  如果想在soc外部扩展rom和ram使用srom控制器
+	  或者伪装成rom或者ram的芯片，譬如dm9000.
+	  dm9000通过srom控制器操作。
+	    dm9000------>bank1     0x50000000 - 0x60000000   p82
+		  
+	
+	

@@ -1,0 +1,76 @@
+1. lwip  （单片机 socket 协议栈）
+
+2. 追踪工具
+ltrace    库追踪（函数，库调用）
+strace    系统追踪（系统调用）
+
+比较传统的 调试方式：
+
+printf大法   只能看到打印信息，估摸着 程序停在哪
+gdb工具   确实可以查段错误，毛病 不能追到调用的函数内（库）
+
+ltarce + 执行程序
+可以看到函数传参，返回值，阻塞效果
+
+3. 常见错误
+
+（1） scanf 数据输入异常     少了 getchar
+
+（2） send 填充的时候  sszie  sizeof（变量） 还是 sizeof（指针）呢？？？
+
+	msg_t MSG;     sizeof(<MSG) 是正确大小
+	msg_t *MSG;    sizeof(MSG)  是 4  如果用send write 之流的函数 ，实际数据只处理了 4Byte
+
+（3） ftok 失败    文件路径不存在，两个进程用了“./”   
+      -->  ftok 用的是    inode值   
+
+（4）  消息队列 和 共享内存
+
+	shmget  msgget  是通过key值生成一个id   如果id号在不同进程中不一样，其实不是一个ipc对象吧
+
+	程序偶尔会出现失败的情况（程序非正常退出，中途修改了数据类型msgdata_t, shmdata_t），需要手动删除ipc对象    ipcs 和 ipcrm
+
+ (5) 细节
+
+    i. msgdata_t   第一个元素一定是   long 型的，而发送端，接收端  的ssize 怎么算？？
+    		sizeof(msgdata_t)-sizeof(long)  == 正文部分的长度
+
+    ii. msgsnd 填的type   对应功能的  msgrcv 用对用 type 去接收（遍历消息队列匹配的过程）
+
+
+    iii. 使用共享内存的时候：映射；    shmat  attached 挂载   shmdt  detached 卸载
+
+    该空间不需要malloc  直接shmat即可  用  shmdata_t 类型的指针  p   ->直接访问成员变量
+
+    容错：   失败是   改返回值  是   （void *）-1
+
+（6）有关假串口程序：
+
+	i. 写不进去文件的
+			创建打开文件的正确方式   open("路径",O_CREAT|O_WRONLY|O_APPEND,0666)
+
+		 用的是标准io写不进去   
+		 					fopen("路径","a");
+
+		 					fwrite fprintf 清 fflush(fp)
+		 	全缓存的刷新方式：  （1）关闭文件 fclose (2) 进程正常退出 return 或者exit
+		 						(3) 缓存满了   4k   （4）fflush
+
+	ii.   假 串口读   shmat  然后用地址访问 成员变量即可
+
+
+	iii. time localtime    year + 1900(1970 1 1 0:0:0 开始算的)
+
+	错误书写
+
+	switch()
+	{
+		time_t t=time(NULL);	// 错误定义位置
+		struct tm* p=localtime(&t);
+	 case ???
+
+	 	fprintf(fp,"%d ....", p->tm_year +1900  )    //实际打印效果    1900
+	 											// 编译的时候提示  p 没初始化
+
+
+	}

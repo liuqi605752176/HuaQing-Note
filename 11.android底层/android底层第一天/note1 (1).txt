@@ -1,0 +1,184 @@
+【1】lcd
+   TTL,LVDS,MIPI
+  
+   RGB接口：
+      VD[23-0] 24根数据线，用来传输图像信息。
+      lcd 并行接口，只有并行传输速率足够快。
+      	  
+    HSYNC:水平同步信号
+    VSYNC:垂直同步信号，
+    VCLK:像素时钟，lcd正常工作时，需要lcd控制器给lcd
+         驱动器提供一个工作时钟。	
+    VDEN: 数据的有效的标志，时序信号，HSYNC,VSYNC配合使用
+   	时序信号主要目的：
+	     为了让lcd能够正常显示提供的控制信号。
+	
+  驱动器和控制器
+     lcd驱动器一般和lcd显示面板集成在一起，  本来是分开的，
+	 面板公司只负责做面板，（三星，LG）,集成的厂商负责从
+	 面板公司买来面板和驱动lcd驱动器集成在一起构成lcd屏幕，
+	 
+	 面板只负责里面的液晶分子的旋转透光，面板需要电信号来
+	 控制液晶分子，lcd驱动器芯片负责给面板提供控制液晶分子
+	 的电信号，驱动器的控制信号来自于自己的数字接口，这个
+	 接口就是屏幕lcd的外部接口。
+	 
+	 lcd控制器一般集成在soc的内部，他负责通过数字接口向
+	 远端的lcd驱动器提供控制像素显示的数字信号。
+	 
+	 lcd控制器必须要按照一定的时序和lcd驱动器通信。
+ 
+ 显存：
+    soc在内存中挑选一段内存（程序员），挑选的时候必须按照
+	一定的规范，然后配置lcd控制器和这一段内存（显存）连接
+	起来构成映射关系，一旦建立映射，lcd控制器就会自动从
+	显存中读取数据传输给lcd驱动器。
+	
+
+ 调色板：
+
+ lcd显示图像的原理：
+   整个视频由多个帧组成，最终播放的视频逐个播放图像。
+   一帧分为多行，一行分为多个像素，因此一帧图像其实就是
+   多个像素组成的矩阵。
+   
+   lcd显示一帧图像的过程：
+    首先需要把一帧分为多行，一行分为多个像素,然后逐个像素去
+	显示
+	lcd驱动器按照接收到lcd控制器给显示数据，驱动一个像素的
+	液晶分子旋转，让这个像素显示出相应的颜色。
+   
+    一行的通信这样的：
+         lcd 控制器发送一个HSYNC(告诉lcd驱动器，接下来
+		 发送的是一行的信息)高电平脉冲(脉冲宽度 HSPW,
+		 高电平的时间由HSPW决定),脉冲告诉驱动器下面的信息
+         是一行的信息，然后开始这一行信息。
+
+        这一行的信息包含三部分：
+             HBPD+行信息+HFPD
+			 
+			
+		HSPW:水平同步信号的脉宽
+		HBPD:水平同步信号的前肩
+		HFPD:水平同步信号的后肩
+		VSPW:垂直同步信号的脉宽
+		VBPD:垂直同步信号的前肩
+		VFPD:垂直同步信号的后肩
+    
+    framebuffer:
+           linux为显示设备提供的接口。	
+
+
+busybox---->rootfs-------->磁盘文件系统		
+ramdisk   
+linux文件系统分类：(VFS)
+
+  磁盘文件系统：ext2,ext3,ext4,cramfs,yaffs,jeffs2。
+                bin  etc  home  dev       
+  网络文件系统： nfs
+  特殊的文件系统：sysfs，proc,tmpfs.    tmp:
+  
+    sysfs  ---->sys : 将内核的数据结构及其属性导出到用户空间，
+	                   用户通过属性文件操作驱动
+					   
+					   内核用户空间创建文件  sysfs.
+   
+设备驱动：
+   内核为lcd提供的接口  fbmem.c
+   linux-3.14-fs4412/drivers/video$ vi fbmem.c 
+ 
+ static int __init fbmem_init(void)
+     	
+		申请设备号，注册设备号，cdev_init,cdev_add
+		 
+		/dev/fb0  29
+       if (register_chrdev(FB_MAJOR,"fb",&fb_fops))
+1852         printk("unable to get major %d for fb devs\n", FB_MAJOR);
+	 
+	    创建类设备目录
+	    fb_class = class_create(THIS_MODULE, "graphics");
+         /sys/class/graphic  
+		 
+		 
+app：
+    open(“/dev/fb0”)
+****************************************************
+fbmem.c 
+	1438 fb_open(struct inode *inode, struct file *file)	
+        获取次设备号
+        int fbidx = iminor(inode);
+		struct fb_info *info;
+
+		  info = get_fb_info(fbidx); 
+		         填充结构体
+		         fb_info = registered_fb[idx];  
+		 
+		 if (info->fbops->fb_open) {
+              res = info->fbops->fb_open(info,1); 
+
+
+write
+********************************************
+ 811 fb_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)  
+     
+	 struct fb_info *info = file_fb_info(file);
+                      738     struct fb_info *info = registered_fb[fbidx];
+ 826     if (info->fbops->fb_write)
+ 827         return info->fbops->fb_write(info, buf, count, ppos);
+ 828  
+ 
+
+			 
+registered_fb 在哪里被填充？
+	
+2 register_framebuffer(struct fb_info *fb_info)	
+       do_register_framebuffer(struct fb_info *fb_info)	
+	            registered_fb
+   
+   
+   
+  register_framebuffer 在lcd设备驱动中调用这个函数。
+
+
+  描述lcd设备：  struct fb_info *info;
+1、分配空间
+     framebuffer_alloc
+2、设置结构体
+    
+3、硬件操作
+     1、将显存的地址和lcd控制器绑定在一起
+	 2、时序(配置lcd控制器中的寄存器)
+4、注册
+     rc = register_framebuffer(info);
+                    fb_info->dev = device_create(fb_class, fb_info->device,
+1639                      MKDEV(FB_MAJOR, i), NULL, "fb%d", i); 
+
+   
+    /dev/fb0 
+    
+   echo  hello  >/dev/tty1
+   
+   内核的启动信息打印到lcd屏幕上：
+      lcd驱动编译内核
+      uboot中  bootargs   console=ttySAC2,115200
+                          console=tty1 
+						  
+app:
+     显示字符
+	 汉字
+	 电子书
+	 图片
+	 视频
+	 
+		
+    						  
+   
+	 
+	
+  
+  
+ 
+     
+	 
+	 
+	 

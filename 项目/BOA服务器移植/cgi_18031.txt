@@ -1,0 +1,74 @@
+fail to bind  : already in used
+
+sudo killall boa
+
+
+cgi
+
+通用网关接口  要求（带有输入 输出的语言）生成的一种在服务器运行的程序
+
+特点：瞬时进程
+
+
+本质：  gcc ？？.c  -o ??.cgi
+
+输出的格式头 需要cgi申明（响应头信息）
+
+http://www.runoob.com/http/http-header-fields.html
+
+Content-Type	
+表示后面的文档属于什么MIME类型。Servlet默认为text/plain，但通常需要显式地指定为text/html。由于经常要设置Content-Type，因此HttpServletResponse提供了一个专用的方法setContentType。
+
+Content-Type:text/html
+
+1样例：
+
+#include <stdio.h>
+
+int main()
+{
+	
+	printf("Content-Type:text/html\n\n");
+	printf("hello world!");
+}
+
+2.cgic 函数套件
+
+cgic.c 和cgic.h
+
+程序书写时 加上  #include "cgic.h"
+
+编译的时候 ：   gcc cgic.c  ??.c -o ??.cgi 
+
+注意： 你自己的代码中不能写main函数
+
+你书写的是 cgiMain,用CGIC写的程序必须写此函数，此函数完成特殊的任务并由CGIC库中的main()函数调用。函数的返回值就是程序的返回值。
+
+
+（1）
+void cgiHeaderContentType(char *mimeType) 
+
+当回应用户请求返回文档显示给用户时必须调用此函数，用来通知浏览器返回的文档类型。
+
+（2）
+FILE *cgiOut 
+
+CGI输出，在输出HTML页面时，cgiHeader函数，比如cgiHeaderContentType，应该被调用，用来输出mime头，然后用标准C I/O函数比如fprintf()或这fwrite()将HTML页面或者GIF图像吸入cgiOut，cgiOut等同于stdout。
+
+
+
+(3)cgiFormResultType cgiFormString( char *name, char *result, int max)
+
+用来获得输入域的字符串。将输入域的字符串拷贝到buffer中。
+
+
+max：将要拷贝的字节数，最多为max-1个字节，因为字符串最后还将被加上一个null终止符。
+
+result：指向取得的值，即保存值的buffer。若字符串比result长，则字符串将被截断。
+
+name：指定的输入域的名称
+
+
+
+
+

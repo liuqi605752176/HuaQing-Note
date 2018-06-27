@@ -1,0 +1,56 @@
+﻿1.下载源码包；就是boa-0.94.13.tar.gz
+  解压：输入命令： tar -xvf boa-0.94.13
+2.进入 boa-0.94.13目录下的src目录，
+你会看到一个.configure 文件
+输入命令:./configure 
+3.然后输入：make
+出现错误：
+util.c: 在函数‘get_commonlog_time’中:
+util.c:100:1: 错误： 毗连“t”和“->”不能给出一个有效的预处理标识符
+make: *** [util.o] 错误 1
+现在我们修改src目录下的 compat.h
+找到：
+#define TIMEZONE_OFFSET(foo) foo##->tm_gmtoff
+修改成为：
+#define TIMEZONE_OFFSET(foo) (foo)->tm_gmtoff
+再执行 ：make，会在src目录下生成一个boa文件，
+4.按需求修改主目录下的boa.conf文件，修改：
+User 0
+Group 0
+把最后一行的/usr/lib/cgi-bin改成 /var/www/cgi-bin
+创建目录: sudo  mkdir  -p /etc/boa
+       把boa.conf拷到/etc/boa目录下
+	  sudo mkdir -p /var/www/cgi-bin
+       把index.html复制到/var/www/下
+5.在src目录下 
+输入：./boa    出现：
+[31/Jan/2013:10:42:55 +0000] log.c:73 - unable to dup2 the error log: Bad file descriptor 这样的错误。
+我们要改动log.c文件
+注释掉:用#if 0和#endif
+#if 0
+if(dup2(error_log, STDERR_FILENO) == -1) 
+{
+　　    DIE("unable to dup2 the error log");
+}
+#endif
+然后：make clean    
+make
+6.然后再在src目录下 执行： ./boa 若出现：Cannot open /var/log/boa/access_log for logging: logfile open: No such file or directory，或者是其他的Cannot open /var/log/boa/error_log for logging: logfile open: No such file or directory
+
+哪个出现，你就在boa.conf里把它给注释掉（不要忘了/etc/boa/目录下的boa.conf用sudo vi /etc/boa/boa.conf打开），即 改成:
+#AccessLog /var/log/boa/access_log
+然后再./boa  此时boa服务器就已经启动，打开ubuntu浏览器，输入ubuntu的ip地址，就可以看到你放在/var/www里的网页了。ok
+7:./boa出现提示：boa.c:194 - unable to bind: Permission denied
+sudo vi /etc/boa/boa.conf
+修改port 为8080
+
+
+
+
+
+
+
+
+
+
+修改某文件权限不足时输入w !sudo tee % 命令

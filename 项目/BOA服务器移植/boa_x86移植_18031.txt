@@ -1,0 +1,112 @@
+http://www.runoob.com/
+
+在线手册
+
+基本html格式
+<!DOCTYPE html>
+<html>
+<head>
+	<title>我是标题栏</title>
+</head>
+<body>
+</body>
+</html>
+
+移植boa 服务器
+
+http://www.boa.org/
+
+boa 方便移植，移植后只有60多k，非常小巧 ，支持cgi技术
+
+1.下载源码包；就是boa-0.94.13.tar.gz
+  解压：输入命令： tar -xvf boa-0.94.13
+
+2.进入 boa-0.94.13目录下的src目录，
+你会看到一个.configure 文件
+输入命令:./configure （生成makefile）
+3.然后输入：make
+
+util.c: In function ‘get_commonlog_time’:
+util.c:100:1: error: pasting "t" and "->" does not give a valid preprocessing token
+make: *** [util.o] Error 1
+
+现在我们修改src目录下的 compat.h
+找到：
+#define TIMEZONE_OFFSET(foo) foo##->tm_gmtoff
+修改成为：
+#define TIMEZONE_OFFSET(foo) (foo)->tm_gmtoff
+再执行 ：make，会在src目录下生成一个boa文件
+
+注： make 出现缺  yacc
+
+清安装  bison和flex
+
+sudo  apt-get install bison flex
+
+4.按需求修改 主目录 （src上一层）下的boa.conf文件，修改：
+User 0
+Group 0
+
+mkdir -p /home/linux/www/cgi-bin
+
+sudo mkdir /etc/boa
+
+把最后一行的/usr/lib/cgi-bin改成 /home/linux/www/cgi-bin/  (注：有斜杠)
+documetsroot 修改为  /home/linux/www  （无斜杠）
+
+
+把boa 粘 /etc/boa下   
+把 boa.conf拷到/etc/boa目录下
+
+把index.html复制到/home/linux/www/下
+
+5. sudo /etc/boa/boa
+
+
+错误：
+
+[08/Jun/2018:06:29:31 +0000] log.c:73 - unable to dup2 the error log: Bad file descriptor
+
+我们要改动log.c文件
+注释掉:用#if 0和#endif
+#if 0
+if(dup2(error_log, STDERR_FILENO) == -1) 
+{
+　　    DIE("unable to dup2 the error log");
+}
+#endif
+
+sudo cp  ./boa  /etc/boa
+
+再次执行
+
+Cannot open /var/log/boa/access_log for logging: logfile open: No such file or directory
+
+在boa.conf里把它给注释掉（不要忘了/etc/boa/目录下的boa.conf用sudo vi /etc/boa/boa.conf打开），即 改成:
+#AccessLog /var/log/boa/access_log
+
+再次执行
+
+[08/Jun/2018:06:33:37 +0000] boa.c:226 - icky Linux kernel bug!: Success
+
+再修改boa.c中的 226行
+
+if (setuid(0) != -1) {
+DIE("icky Linux kernel bug!");
+}
+---------->改为
+#if 0
+if (setuid(0) != -1) {
+DIE("icky Linux kernel bug!");
+}
+#endif
+
+再次编译，拷贝，运行
+
+
+6. 如果网页乱码： 说明没加 编码设置
+
+在index.html内增加一行  charset
+<head>
+<meta charset="utf-8">
+</head>

@@ -1,0 +1,5 @@
+1.Snipaste_2018-05-07_20-02-06.png
+	linux-4.9/arch/arm/boot/dts/exynos4412-fs4412.dts有错误
+
+2.Snipaste_2018-05-08_16-06-44.png
+    

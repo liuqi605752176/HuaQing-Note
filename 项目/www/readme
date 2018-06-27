@@ -1,0 +1,12 @@
+choose.html->
+
+index1.html		->		./cgi-bin/rl.cgi 		//登陆注册
+led.html		->		./cgi-bin/led_snd.cgiOut	//type = 200 
+													//led_on = 2 
+													//led_off = 3
+env.thml		->		./cgi-bin/wenshidu.cgi      //温湿度，
+						./cgi-bin/wenshidu.cgi		//火焰
+												人体红外，
+												烟雾
+video.html		->		src:					//视频监控
+picture.html	->		./cgi-bin/picture.cgi

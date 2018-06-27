@@ -1,0 +1,227 @@
+13:43:10 **** Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+13:48:54 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:26:39 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:26:43 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:31:07 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:34:29 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:34:53 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:36:37 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:39:09 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:11: Error: bad instruction `strsb r3,data'
+make: *** [all] Error 1
+14:50:38 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:50:48 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:53:19 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+14:54:38 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:17:19 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:19:40 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:19:48 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:30:23 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:30:32 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:11: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:51:23 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:13: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:51:36 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:13: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:52:16 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:14: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:52:33 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:14: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:53:14 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:15: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+15:58:26 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:17: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+16:11:38 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:24: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+16:16:51 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:25: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+16:18:25 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:25: Warning: register range not in ascending order
+asm.s:12: Error: invalid constant (7e8) after fixup
+make: *** [all] Error 1
+16:18:49 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:25: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+16:38:00 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:2: Error: bad instruction `int a'
+asm.s:3: Error: bad instruction `void fun()'
+asm.s:4: Error: junk at end of line, first unrecognized character is `{'
+asm.s:5: Error: bad instruction `static int a=123'
+asm.s:6: Error: junk at end of line, first unrecognized character is `}'
+asm.s:8: Error: bad instruction `void fun2()'
+asm.s:9: Error: junk at end of line, first unrecognized character is `{'
+asm.s:10: Error: bad instruction `static int a=456'
+asm.s:11: Error: junk at end of line, first unrecognized character is `}'
+asm.s:45: Warning: register range not in ascending order
+asm.s:81: Error: symbol `a' is already defined
+make: *** [all] Error 1
+16:38:11 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:35: Warning: register range not in ascending order
+asm.s:71: Error: symbol `a' is already defined
+make: *** [all] Error 1
+16:38:22 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:27: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+16:38:55 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:27: Warning: register range not in ascending order
+asm.s:29: Error: misaligned branch destination
+make: *** [all] Error 1
+16:40:20 **** Incremental Build of configuration Default for project xiaoming ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+asm.s: Assembler messages:
+asm.s:27: Warning: register range not in ascending order
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+17:19:10 **** Build of configuration Default for project led_asm ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+17:21:24 **** Incremental Build of configuration Default for project led_asm ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+17:21:29 **** Incremental Build of configuration Default for project led_asm ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
+17:21:32 **** Incremental Build of configuration Default for project led_asm ****
+make all 
+arm-none-eabi-gcc -g -c asm.s -o asm.o
+arm-none-eabi-ld -Ttext 0x40008000 asm.o -o asm.elf
+arm-none-eabi-objdump -D asm.elf > asm.dis
