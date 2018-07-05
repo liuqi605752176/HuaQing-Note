@@ -1,0 +1,385 @@
+1 、如何自动创建设备文件？
+
+	1. mknod filename type major minor
+	2. devno = MKDEV(major,minor); 
+	   cls = class_create(THIS_MODULE, "myclass");   sys/class/myclass
+	   device_create(cls,NULL,devno,NULL,"led");     sys/class/myclass/led 
+	   
+	   mdev  -s   自动扫描   /sys/class 和/sys/block中所以的类设备目录，如果在目录下
+	   含有名为dev等的文件系统，则mdev就会利用这些信息在dev目录下创建设备文件。
+	   
+	   
+	   
+
+2、led驱动编写有几种方式？
+
+	1.字符设备驱动（驱动和硬件信息绑定）
+	2.基于平台总线(字符设备驱动)  驱动和硬件信息分离
+	3.LED子系统  sysfs 属性文件
+	4.input
+
+3、如何实现http服务器？
+    1.创建套接字 
+	2.绑定ip地址和端口号   http默认端口号为80
+	3.设置监听
+	4.等待连接 
+	5.调用send函数发送 网页（open,read）
+	
+
+4、如何编写守护进程，简述syslog的作用？
+
+	1.创建子进程，父进程退出
+	2.在子进程中创建新会话
+	3.改变工作目录 
+	4.重设文件权限掩码 
+	5.关闭文件描述符
+	
+	由于守护进程是完全脱离终端的，所以用gdb无法调试，使用syslog服务将程序的出错信息输入到系统的日志文件中
+	其中会规定消息的等级，消息的输出格式等
+	
+5、bootloader和uboot的区别？
+
+	uboot是BootLoader的一种
+
+6、如何移植uboot？
+
+	1.指定交叉编译链
+	2.指定产品BOARD
+	3.实现能看到串口终端信息
+	4.网卡移植
+	5.FLASH移植 （EMMC）
+	
+7、传感器驱动如何编写？
+    i2c总线
+	输入子系统 
+	sysfs 
+	
+	参考bma250驱动
+
+8、BL0，BL1，BL2，BL3的作用？
+
+   BL0：即芯片厂商固化在IROM中的代码
+		作用：关看门狗、关中断、关MMU、关D-cache、使能icache
+		初始化栈、初始化时钟、设置PLL、获取启动方式
+		从指定的启动设备加载BL1到SRAM中运行
+
+   BL1: 三星提供的加密文件，作用：初始化中断、设置SVC、将BL2段代码加载到SRAM ，在SRAM中运行的地址    0x2021400、
+        svc：管理模式。相比模式(sys)，可以获得更多的硬件资源
+   BL2: 截取uboot.bin  前14k ，
+		初始化异常向量表、初始化时钟、初始化DRAM、初始化EMMC，初始化串口、清BSS段
+		重定位->又称自搬移 将剩下的uboot加载到DRAM中运行(即BL3)
+
+   BL3：剩下的uboot  
+
+9、exynos4412  时钟 APLL,MPLL,VPLL的区别？
+
+	CPU_BLK ：内含Cortex-A9 MPCore处理器、 L2 cache 控制器、CoreSight (调试用 )。CMU_CPU用于给这些部件产生时钟 。
+	
+	DMC_BLK ：内含DRAM 内存控制器 (DMC)、安装子系统 (Security sub system )、通用中断控制器 (Generic Interrupt 		
+			  Controller，GIC) 。CMU_DMC 用于给这些部件产生时钟。
+	
+	LEFTBUS_BLK 和 RIGHTBUS_BLK：它们是全局的数据总线，用于在 DRAM 和和其他子模块之间传输数据。
+	
+	APLL：用于 CPU_BLK （可产生高达1.4GHz的频率）；作为 MPLL 的补充，它也可以给 DMC_BLK 、LEFTBUS_BLK 、RIGHTBUS_BLK 和 
+	      CMU_TOP 提供时钟。
+	MPLL：（可产生高达1GHz的频率）用于DMC_BLK 、LEFTBUS_BLK 、RIGHTBUS_BLK 和 CMU_TOP。
+	EPLL ：主要给音频模块提供时钟，192MHz
+	VPLL ：主要给视频系统提供54MHz时钟， 给 G3D(3D图形加速器 )提供时钟，或者是1.1V下的440MHz。
+	
+10、arm中icache的作用
+
+	在主存与CPU之间设置的一个高速的容量较小的存储器，叫做cache，cache可以分为Dcache，Icache。分别cache data和 instruction。
+	其中Dcache必须在MMU开启后才能在CP15寄存器中使能，Icache在MMU未使能的情况下，也是可以使能的。
+	
+	
+	Cache是一种容量比较小，但访问速度比较快存储器。由于处理器的速度远高于主存，处理器直接从内存中存取数据要等待一定周期，
+	而Cache位于处理器与主存之间，保存着最近一段时间处理器涉及到的主存块内容。在需要读取数据是，处理器可能就会从Cache中读取需要的数据，
+	而不是从主存中获取数据，这样就提高了系统的运行效率
+
+11、uboot启动流程？
+
+   1、初始化异常向量表
+   2、关中断，关看门狗，关MMU,使能ICACHE
+   3、初始化时钟
+   4、初始化DRAM
+   5、初始化串口
+   6、设置栈
+   7、清BSS段
+   8、重定位
+   9、进一步初始化硬件
+   10、启动内核
+
+12、标准IO和文件IO的区别？
+
+	标准IO：库，带缓冲的IO(减少系统调用的次数)，通过流操作文件，高级IO。
+	文件IO：系统调用，不带缓存(内核缓存)， 通过文件描述符操作文件，低级IO。
+
+13、select，poll，epoll的区别？
+
+	select特点：
+    1、将表从用户空间拷贝到内核空间
+    2、清空表
+    3、遍历
+    4、将表从内核空间拷贝到用户空间
+    5、select支持文件描述符的个数  1024
+	
+	poll特点：
+     1、将表从用户空间拷贝到内核空间
+     2、遍历
+     3、将表从内核空间拷贝用户空间
+     4、poll支持的文件描述符比select多
+	 
+ （1）select，poll实现需要自己不断轮询所有fd集合，直到设备就绪，期间可能要睡眠和唤醒多次交替。
+      而epoll其实也需要调用epoll_wait不断轮询就绪链表，期间也可能多次睡眠和唤醒交替，
+	  但是它是设备就绪时，调用回调函数，把就绪fd放入就绪链表中，并唤醒在epoll_wait中进入睡眠的进程。
+	  虽然都要睡眠和交替，但是select和poll在“醒着”的时候要遍历整个fd集合，
+	  而epoll在“醒着”的时候只要判断一下就绪链表是否为空就行了，这节省了大量的CPU时间。
+	  这就是回调机制带来的性能提升。
+
+ （2）select，poll每次调用都要把fd集合从用户态往内核态拷贝一次，并且要把current往设备等待队列中挂一次，
+      而epoll只要一次拷贝，而且把current往等待队列上挂也只挂一次
+     （在epoll_wait的开始，注意这里的等待队列并不是设备等待队列，只是一个epoll内部定义的等待队列）。
+      这也能节省不少的开销    
+	
+
+14、sysfs主要的作用？
+
+	是一个虚拟的文件系统，可以产生一个包括所有系统硬件的层级视图。sysfs把连接在系统上的设备和总线组织成为一个分级的文件
+	，他们可以由用户空间存取，向用户空间导出内核数据结构以及它们的属性，展示设备驱动模型中各组件的层次关系
+
+15、内核为什么要引入平台总线？
+
+	将驱动与硬件分离
+
+16、字符设备驱动实现流程？
+
+	申请设备号:
+	注册设备号
+	申请cdev结构体
+	申请file_operations结构体，并初始化
+	初始化cdev结构体：
+	cdev结构体的注册
+	cdev结构体的注销：
+	设备号的注销：
+	
+	自动创建设备节点第一步，创建类
+	自动创建设备节点第二步，在类下创建设备链接文件，并且在/dev下创建设备节点
+	自动创建设备节点第三步，注销设备
+	自动创建设备节点第四步，注销类
+
+17、内核中select和异步通知的区别？
+
+	select不断的轮询来判断是否有资源就绪
+	异步通知是等资源就绪时，就通知程序，程序不需要轮询来检查是否有资源就绪
+
+18、const  int  a，int  const  a， const  int  * a，  const  int  const  * a；的区别？
+
+	const  int  a             a的值不可变
+	int  const  a             a的值不可变
+	const  int  * a           a可变，a指向得内容不可改变
+	const  int  const  * a	  a和a指向的内容都不可变
+	
+	http://www.cnblogs.com/xwdreamer/archive/2012/04/12/2444494.html
+	
+
+19、inline的作用？
+	
+	提高代码执行效率
+
+20、volatile 的作用？
+
+	这个关键字声明的变量，编译器对访问该变量的代码就不再进行优化，从而可以提供对特殊地址的稳定访问。
+
+21 、#ifndef  define   #end  的作用 
+
+	防止被重复定义
+
+22、设备树中
+   reg   interrupt-parent  interrupts   status  pinctl-0   pinctl-name  compatible 表示什么？
+   
+    reg：属性来将地址信息编码进设备树，表示该设备的地址范围；来获取寄存器相关的地址信息列表
+	interrupt-parent：标识此设备节点属于哪一个中断控制器，如果没有设置这个属性，会自动依附父节点的
+	interrupts,一个中断标识符列表，表示每一个中断输出信号
+	status：设置外设节点的状态；
+	
+	pinctl-name: 引脚可以配置多种状态，
+				 default状态表示设备处于active时的状态，一般在设备驱动的.resume中配置，另外在启动时也会配置pin脚为default状态。
+				 idle状态表示系统处于idle时需要配置的pin脚状态，此时系统并没有进入深度休眠。
+				 sleep状态表示系统处于深度休眠时的pin脚状态，一般在设备驱动的.suspend中配置。
+				 
+	compatible属性，一个特殊的字符串，
+	是系统赖以查找对应的设备驱动程序的一个关键值，系统就是根据它的值来查找这个设备应该使用哪一个驱动的。
+	
+23.进程和线程区别？
+
+	进程的地址空间是独立的。线程的地址空间共享的。
+    进程消耗的资源比较大，线程消耗的资源比较小
+    进程和进程通信通过进程间通信方式，线程和线程通信通过全局变量。
+
+24.fork和vfork的区别？
+
+   fork创建的进程的地址空间是独立的。vfork 创建的进程的地址空间共享的。
+   fork创建的进程子进程和父进程没有先后顺序。但是vfrok创建的进程子进程先运行。
+
+25.进程间通信方式有几种？每一种的特点？
+
+	无名管道：一种半双工的通信方式,数据只能单向流动,而且只能在具有亲缘关系的进程间使用
+	有名管道：也是一种半双工的通信方式,但是它允许无亲缘关系进程间的通信。
+	信号：是在软件层次上对中断机制的一种模拟，用于通知进程某事件发生
+	消息队列：消息的链接表
+	共享内存：最有效的进程间通信方式，这种方式需要依靠某种同步机制，互斥锁或者信号量
+	信号灯集：
+	socket：tcp、udp
+
+26.字符型驱动设备你是怎么创建设备文件的，就是/dev/下面的设备文件，供上层应用程序打开使用的文件？
+
+	mknod
+    
+    自动创建：
+       class_create
+       device_create
+
+27.insmod一个驱动模块，会执行模块中的哪个函数？rmmod呢？这两个函数在设计上要注意哪些？
+	遇到过卸载驱动出现异常没？是什么问题引起的？
+	
+	module_init
+	module_exit
+	
+	缺少目录：/lib/modules/3.14.0
+	在init函数中申请的资源在exit函数中要释放，包括存储，ioremap，定时器，工作队列等等。
+	
+28.static作用？
+
+	作用域  存储域
+
+29.inline的作用？
+
+	提高代码执行效率
+
+30.在驱动调试过程中遇到过oops没？你是怎么处理的？
+
+	1. arm-none-linux-gnueabi-addr2line   地址   -e  vmlinux  -f
+    2. printk  
+
+31.ioctl和unlock_ioctl有什么区别？
+
+	kernel 2.6.35 及之前的版本中struct file_operations 一共有3个ioctl ：
+ioctl,unlocked_ioctl和compat_ioctl
+现在只有unlocked_ioctl和compat_ioctl 了
+
+在kernel 2.6.36 中已经完全删除了struct file_operations 中的ioctl 函数指针，取而代之的是unlocked_ioctl，compat_ioctl被使用在用户空间为32位模式，而内核运行在64位模式时。这时候，需要将64位转成32位。 
+
+32.驱动中操作物理绝对地址为什么要先ioremap?
+
+	内核使能 MMU
+
+33.设备驱动模型三个重要成员是？platfoem总线的匹配规则是？在具体应用上要不要先注册驱动再注册设备？有先后顺序没？
+
+	驱动  设备   总线   名字相同  没有先后顺序
+
+34.内核函数mmap的实现原理，机制？
+
+	map将一个文件或者其它对象映射进内存。文件被映射到多个页上，
+	如果文件的大小不是所有页的大小之和，最后一个页不被使用的空间将会清零。
+	mmap在用户空间映射调用系统中作用很大。
+
+35.在Linux C中，ls这个命令是怎么被执行的?
+
+   fork+exec
+   system("ls -l");
+
+36.uboot是如何引导内核？
+
+	加载内核
+	判断镜像
+	相关环境变量 bootcmd bootargs
+
+37.请从网卡、LCD驱动器、传感器芯片中选择一个或者2个（可以以具体的芯片为例），对下面的问题做答： 
+	1)如果是外部扩展芯片，请说出你用的芯片的型号 
+	2)画出上题中你选定相应硬件模块与CPU的主要引脚连线 
+	3) 编写上题中你选定相应硬件模块相应LINUX驱动的流程？ 
+
+38.platform总线设备及总线设备如何编写？
+
+	驱动    硬件
+
+39.IIC原理，总线框架，设备编写方法，i2c_msg
+
+	i2c_adapter
+       i2c_aigorithm
+          master_xfer  操作从机设备
+          
+     i2c_transfer
+     
+      i2c_msg
+        有多少个起始位就有多少个消息，消息的长度以字节的形式表示
+
+40.查看驱动模块中打印信息应该使用什么命令？如何查看内核中已有的字符设备的信息？如何查看正在使用的有哪些中断号？
+
+	dmesg    cat   /proc/devices
+             cat   /proc/interrupt
+  
+41.中断和轮询哪个效率高？怎样决定是采用中断方式还是采用轮询方式去实现驱动？
+
+   中断是CPU处于被动状态下来接受设备的信号，而轮询是CPU主动去查询该设备是否有请求。
+   凡事都是两面性，所以，看效率不能简单的说那个效率高。如果是请求设备是一个频繁请求cpu的设备，
+   或者有大量数据请求的网络设备，那么轮询的效率是比中断高。如果是一般设备，
+   并且该设备请求cpu的频率比较低，则用中断效率要高一些。主要是看请求频率。
+
+42、IIC,SPI,串口的区别？
+
+	http://blog.csdn.net/a746742897/article/details/52503298
+	
+	
+43、输入子系统分为哪几层？如何编写设备驱动？
+
+	从上到下由三层实现，分别为：
+	输入子系统事件处理层 、
+	输入子系统核心层 、
+	输入子系统设备驱动层。
+	
+	输入子系统包括两类驱动程序：事件驱动程序和设备驱动程序。
+	事件驱动程序负责和应用程序的接口，而设备驱动程序负责和底层输入设备的通信。
+
+44、TCP和udp的区别？
+
+	TCP 有连接，可靠的，三次握手
+	UDP 无连接，不可靠
+
+45、用变量a给出下面的定义
+				a) 一个整型数（An integer） 
+				b)一个指向整型数的指针（ A pointer to an integer） 
+				c)一个指向指针的的指针，它指向的指针是指向一个整型数（ A pointer to a pointer to an intege）r 
+				d)一个有10个整型数的数组（ An array of 10 integers） 
+				e) 一个有10个指针的数组，该指针是指向一个整型数的。（An array of 10 pointers to integers） 
+				f) 一个指向有10个整型数数组的指针（ A pointer to an array of 10 integers） 
+				g) 一个指向函数的指针，该函数有一个整型参数并返回一个整型数（A pointer to a function that takes an integer as an argument and returns an integer） 
+				h)一个有10个指针的数组，该指针指向一个函数，该函数有一个整型参数并返回一个整型数（ An array of ten pointers tofunctions that take an integer argument and return an integer ）
+				
+				a) int a;
+				b) int *a;
+				c) int **a;
+				d) int a[10];
+				e) int *a[10];
+				f) int (*a)[10];
+				g) int (*a)(int);
+				h) int (*a[10])(int); 
+
+46、中断是嵌入式系统中重要的组成部分，这导致了很多编译开发商提供一种扩展—让标准C支持中断。具代表事实是，产生了一个新的关键字__interrupt。下面的代码就使用了__interrupt关键字去定义了一个中断服务子程序(ISR)，请评论一下这段代码的。
+
+			__interrupt double compute_area (double radius) 
+			{
+			double area = PI * radius * radius;
+			printf("\nArea = %f", area);
+			return area;
+			}
+
+		1. ISR不能返回一个值。
+        2. ISR不能传递参数。 
+        3. 在许多处理器编译器中，浮点一般都是不可冲入的。有些处理器编译器需要让额外的寄存器入栈，
+		   有些处理器编译器就不允许在ISR中做浮点运算。此外ISR应该是短而有效率的。在ISR中做浮点运算是不明智的。
+        4. printf --> printk			
+
+   
+   
+     

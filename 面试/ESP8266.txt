@@ -1,0 +1,83 @@
+1.安装驱动cp2102
+2.https://pan.baidu.com/s/1skRvR1j#list/path=%2F
+	下载编译环境并解压安装
+3.下载SDK
+	我下载的是non-os版本的，有OS的源码不能使用AT指令
+4.在windows下编译，eclipe打开，可以直接编译
+5.nodeMCU 硬件信息flash：4MB
+6.烧录(espflashdowntool烧录工具)，具体需要查看官方的文档，在官方可以下载，ESP8266乐鑫烧录文件
+	boot.bin     					0x00000
+	user1.bin						0x01000
+	esp_init_data_default.bin 		0x3FC000
+	blank.bin 						0x3FE000
+	blank.binutils    				0x3FF000
+
+7.串口测试(波特率115200)
+	连接串口后，输入AT，显示OK，则移植OK，如果连接串口后，如果出现乱码，是因为nodeMCU默认波特率是9600，所以启动信息会出现乱码，这是正常的，只要输入AT，显示OK，就可以了
+8.设置透传
+	AT+RESTORE				//首先恢复出厂设置
+	AT+CWMODE=3				//设置应用模式，1：STA模式 2：AP模式 3：STA+AP模式
+	AT+RST     				//重启模块
+	AT+CWLAP				//查看附近无线网络
+	AT+CWJAP="WRTnode2B98","" //加入AP
+	AT+CIFSR					//获取本地IP地址
+	AT+CIPMUX=1					//启动多连接
+	AT+CIPSERVER=1,50000		//建立SERVER，端口50000
+9.ESP8266断电之后发现，只能连上wifi，不能进行开启多连接和建立server
+	解决办法：在下位机STM32中，一上电就给串口发送AT指令写入到ESP8266中
+	需要写入的指令：
+
+	unsigned char at_cipmux[] = {0x41, 0x54, 0x2B, 0x43, 0x49, 0x50, 0x4D, 0x55, 0x58,0x3D, 0x31, 0x0D,0x0D, 0x0A};//AT+CIPMUX=1(回车)
+	unsigned char at_cipserver[] = {0x41, 0x54, 0x2B, 0x43, 0x49, 0x50, 0x53, 0x45, 0x52, 									0x56, 0x45, 0x52, 0x3D, 0x31, 0x2C, 0x35,0x30, 0x30, 								0x30, 0x30, 0x0D, 0x0D,0x0A};//AT+CIPSERVER=1,50000(回车)
+
+	写入函数：
+void ESP8266_Init(void)
+{
+	delay_ms(2000);
+	int i = 0;
+	for(i = 0; i < 14; i++)
+	{
+		//USART1->DR = at_cipmux[i];//AT+CIPMUX=1
+		//while((USART1->SR & 0x40) == 0);
+		USART_SendData(USART1, at_cipmux[i]);
+		while(!USART_GetFlagStatus(USART1, USART_FLAG_TXE));
+				
+	}
+	delay_ms(1000);
+	
+	for(i = 0; i < 23; i++){
+		//USART1->DR = at_cipserver[i];//AT+CIPSERVER=1,50000
+		//while((USART1->SR & 0x40) == 0);
+		USART_SendData(USART1, at_cipserver[i]);
+		while(!USART_GetFlagStatus(USART1, USART_FLAG_TXE));
+	}
+	
+}
+至此，ESP8266完成开启TCP server服务，可以进行通讯
+
+10.通过串口以及用网络调试助手模拟客户端，进行数据间发送，发现当ESP8266需要发送时需要先写AT指令
+	AT+CIPSEND=0,1   :0 多连接的序号，1 将要发送的数据字节数
+
+	然后输入发送的数据，才能进行发送，所以STM32程序在每次发送前要封装一个AT指令发送头
+
+11.数据发送
+	从stm32通过串口发送到ESP8266，然后通过wifi发送到客户机，用网络调试助手测试了，
+	esp8266串口收到什么数据，就发送什么数据，不添加其它数据包
+	
+12.数据接收
+	通过网络调试助手发送数据到esp8266
+	串口接收到的数据格式
+			+IPD,0,2:hi
+			+IPD,0,1:5
+
+		+IPD：固定格式
+		0：链接序号
+		2/1：发送的数据字节数
+		hi/5:所发送的数据
+
+	所以需要滤除前面的固定格式，得到我们所需要的数据
+	解决办法：
+		STM32中封装一个函数，用来滤除消息的头，得到接收到的实际数据
+
+	至此esp8266数据可以接收与发送
+

@@ -1,0 +1,139 @@
+
+搭建环境
+	1.使用的开发板：WRTnode1，基于MT7620N
+		系统：ubuntu 16.04 32位
+		用户名：linux 
+		密码：1
+		root密码：1
+
+	2.配置openwrt编译环境
+		sudo apt-get update
+		sudo apt-get install gcc  g++ binutils patch bzip2 flex bison make autoconf gettext texinfo unzip sharutils subversion libncurses5-dev ncurses-term zlib1g-dev subversion git-core gawk asciido libz-dev
+		也可单独安装每一个软件
+
+	3.配置mips交叉编译器
+		① 下载
+			wget https://downloads.openwrt.org/barrier_breaker/14.07/ramips/mt7620n/OpenWrt-Toolchain-ramips-for-mipsel_24kec%2bdsp-gcc-4.8-linaro_uClibc-0.9.33.2.tar.bz2
+		② 解压到自己的安装目录(/)
+		 tar -xjf OpenWrt-Toolchain-ramips-for-mipsel_24kec+dsp-gcc-4.8-linaro_uClibc-0.9.33.2.tar.bz2
+	
+	4.编译固件
+		① 下载SDK
+			mkdir OpenWrt
+			cd OpenWrt
+			git clone https://github.com/WRTnode/openwrt.git
+
+			cd wrtnode
+			./scripts/feeds update -a
+			./scripts/feeds install -a
+		注：遇到WARNING:no feed for package '***'found,maybe it's...
+			执行sudo apt-get install libssh-dev
+
+		② 第一次编译
+			make menuconfig
+				Target System  --->  (X) Ralink RT288x/RT3xxx 
+ 				Subtarget      --->  (X) WRTnode 1 series  
+                LuCI  --->   1. Collections  --->  <*> luci
+           我在编译时加入了已经加入了USB驱动
+            加USB相关支持：ohci驱动（usb1.x)，ehci驱动(usb2.0)，usb-storage驱动(usb存储设备)
+			Kernel modules  --->   USB Support  --->  	kmod-usb-ohci 
+                                               			kmod-usb2
+                                               			kmod-usb-storage
+                                               			kmod-usb-storage-extras
+			添加常用的文件系统的驱动支持(其中ntfs使用ntfs-3g进行驱动，需要选上kmod-fs-fuse)
+			Kernel modules  --->  Filesystems  --->     kmod-fs-ext4
+                                               			kmod-fs-vfat             		   kmod-fs-autofs4
+                                               			kmod-fs-fuse
+			添加相关的语言编码(默写文件系统需要，如fat32)
+			Kernel modules  ---> Native Language Support --->	kmod-nls-cp437 
+                                                 				kmod-nls-utf8
+                                                 				kmod-nls-iso8859-1
+			添加相应工具
+			Utilities    --->   Filesystem  ---> ntfs-3g  /* ntfs文件系统需要的驱动 /*
+			Base system  --->   block-mount  /* 开机自动挂载 */
+			
+            执行make V=s 进行第一次openwrt编译
+            在openwrt目录下生成bin目录
+            openwrt/bin/ramips/openwrt-ramips-mt7620-wrtnode-squashfs-sysupgrade.bin固件
+            
+    5. 烧录
+    	① 连接开发板以及串口烧录工具putty等
+    	② 在显示以下信息时：
+    		Please choose the oper  
+    		1: Load system code to SDRAM via TFTP. 
+   			2: Load system code then write to FlaP.                     
+   			3: Boot system code via Flash (default).
+   			4: Entr boot command line int  
+   			7: Load Boot Loader code then write to Flash via Serial. 
+   			9: Load Boot Loader write to Flash via TFTP.                  
+   			选择4,进入到uboot命令行
+
+   		③ 设置服务器IP和本机IP
+   			setenv serverip 172.25.1.123
+   			setenv ipaddr 172.25.1.100
+   			save
+
+   		④ 重启开发板
+
+   		⑤ 在虚拟机内用sp,将固件传到openwrt开发板/tmp目录
+   			scp 固件 root@服务器IP:/tmp
+
+   		⑥ 进入开发板命令行
+   			mtd write -r openwrt-ramips-mt7620-wrtnode-squashfs-sysupgrade.bin firmware
+   			烧写成功会自动重启
+   			烧录成功
+
+   	6. 将wrtnode设置为有线路由器
+   		通过查资料，发现其网口物理端口时port3，在软件上默认port3时LAN口，所以要修改网络端口
+   		① 在wrtnode命令行修改配置文件
+   			vi /etc/config/network
+   		②把0和3位置换一下，将原来定义为WAN口的port0改为port3，底板上的网口为port3，然后重启一下网络
+   			config switch_vlan               
+        		option device 'switch0'                
+        		option vlan '1'          
+        		option ports '1 2 3 4 6t'
+                               
+			config switch_vlan             
+        		option device 'switch0'           
+        		option vlan '2'          
+        		option ports '0 6t'  
+        修改为
+        	config switch_vlan               
+        		option device 'switch0'                
+        		option vlan '1'          
+        		option ports '1 2 0 4 6t'
+                               
+			config switch_vlan             
+        		option device 'switch0'           
+        		option vlan '2'          
+        		option ports '3 6t'  
+     	③ 重启后，ifconfig，查看分配到的ip地址 172.25.1.105
+
+     7.移植摄像头
+     		make menoconfig
+
+			Multimedia  --->  mjpg-streamer -- > Install input uvc plugin
+                                                 Install output http plugin
+		Kernel modules  --->  Video Support ---> kmod-video-core
+                                               	 kmod-video-uvc
+                                               	 kmod-video-videobuf2
+        make V=s
+        之后烧录可以选择在命令行烧录，为了方便，我选择在web服务器进行网页烧录
+
+        登陆172.25.1.105 
+        输入密码：1
+        标签页system->backup/flash firmware->Flash new firmware image->选择文件
+        烧录成功后，会自动重启开发板
+        进入开发板命令行，插入usb摄像头 
+        ls /dev：查看是否有设备文件video0
+        命令行输入： mjpg_streamer -i "input_uvc.so -f 30 -r 1280*720" -o "output_http.so -p 8080"
+
+		在网页输入http://172.25.1.110:8080/?action=stream，可查看视频说明移植成功
+	8. usb转串口测试
+		之前在编译内核时已经选中一起编译
+		插入USB转串口，连接下位机
+		并编写测试程序读取下位机传过来的值
+		在终端显示出了读出的值
+		USB串口移植成功
+		
+

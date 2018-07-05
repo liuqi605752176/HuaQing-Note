@@ -1,0 +1,247 @@
+1 、如何自动创建设备文件？
+	register_chrdev
+	class_create
+	device_create
+
+2、led驱动编写有几种方式？
+	字符驱动框架
+	platform平台驱动
+	输入子系统
+	sysfs
+
+	
+3、如何实现http服务器？ 
+
+
+	
+
+4、如何编写守护进程，简述syslog的作用？
+	父创子，父死
+	成为会话组组长
+	更改路径
+	修改权限掩码
+	关闭文件描述符
+	
+
+	syslog:系统日志
+
+5、bootloader和uboot的区别？
+	uboot是bootloader的一种通用版本
+	
+
+6、如何移植uboot？
+	1.选择与该开发板CPU一样的参考板config文件
+	2.编译uboot
+		
+		
+7、传感器驱动如何编写？
+	1.确定用的是哪种总线？SPI,USB,I2C等
+	2.根据相应总线编写驱动代码
+
+
+
+8、BL0，BL1，BL2，BL3的作用？
+	BL0：厂商固话代码，用来初始化SOC内部硬件，
+	BL1：厂商提供，加密文件
+	BL2：BL3前14K的代码，用来初始化MMU，初始化系统时钟
+	BL3:bootloader，启动内核
+		
+
+9、exynos4412  时钟 APLL,MPLL,VPLL的区别？
+
+		
+10、arm中icache的作用
+	加快运算速度
+
+11、uboot启动流程？
+	上电开机->IROM运行厂商固话代码BL0，关闭MMU,关闭中断，并校验BL1的代码的完整性,拷贝BL1到SOC内部IRAM运行->关闭MMU,初始化时钟，校验BL2代码，拷贝BL2到IRAM中运行->初始化SRAM，初始化时钟，拷贝BL3到SRAM中运行->uboot启动，初始化MMU，初始化中断，初始化时钟，启动内核
+
+
+12、标准IO和文件IO的区别？
+	标准IO:系统调用,可移植性高,低级IO,有缓存,操作的是文件流指针
+	文件IO:C库调用，高级IO，五缓存，操作的是文件描述符
+
+	
+13、select，poll，epoll的区别？
+	select需要维护一个用来存放大量fd的数据结构，这样会使得用户空间和内核空间在传递该结构时复制开销大
+
+
+
+		
+14、sysfs主要的作用？
+	
+	
+15、内核为什么要引入平台总线？
+	外设一般是挂载在某条总线上的，比如I2C,SPI,USB等，有一些设备不属于这些，比如led，key等，为了简化内核驱动代码的一致性，虚拟了一条平台总线，将不属于物理总线的设备挂载在平台总线上，简化驱动代码
+	
+	
+16、字符设备驱动实现流程？
+	驱动初始化：分配、初始化、注册cdev
+	实现设备操作：open,read,write等
+	驱动注销
+	
+17、内核中select和异步通知的区别？
+
+	
+
+18、const  int  a，int  const  a， const  int  * a，  const  int  const  * a；的区别？
+	const int a:变量a的值不可以被更改
+	int const a:变量a的值不可以被更改
+	const  int  * a：指针变量a的指向不能被更改
+	const  int  const  * a：指针变量的指向以及所指向的值都不能被更改
+
+19、inline的作用？
+	
+
+	
+20、volatile 的作用？
+	内存可见性：通知内核该变量易变，直接从主内存中取值，保证该值永远是最新的，
+	禁止指令重排序：为了尽可能减少内存操作速度远慢于CPU运行速度所带来的CPU空置的影响，虚拟机会按照自己的一些规则将程序编写顺序打乱
+	
+
+21 、#ifndef  define   #end  的作用 
+	防止头文件重复包含
+
+	
+22、设备树中
+   reg   interrupt-parent  interrupts   status  pinctl-0   pinctl-name  compatible 表示什么？
+   reg：寄存器地址
+   interrupt-parent：中断父节点
+   interrupts:中断节点
+   status：状态
+   pinctl-0：引脚
+   pinctl-name：引脚名
+23.进程和线程区别？
+	线程是资源分配的最小单位，进程是资源调度的最小单位，进程有独立的空间，线程共享，
+
+		
+24.fork和vfork的区别？
+	
+
+		
+25.进程间通信方式有几种？每一种的特点？
+	有名管道
+	无名管道
+	信号
+	共享内存
+	消息队列
+	信号量
+	socket
+
+26.字符型驱动设备你是怎么创建设备文件的，就是/dev/下面的设备文件，供上层应用程序打开使用的文件？
+	register_chrdev
+
+	   
+	   
+27.insmod 一个驱动模块，会执行模块中的哪个函数？rmmod呢？这两个函数在设计上要注意哪些？遇到过卸载驱动出现异常没？是什么问题引起的？
+	module_init()
+	module_exit()
+
+
+	
+28.static作用？
+	修饰全局变量，限制作用域，仅对本文件有效
+	修饰局部变量，改变存储域，从栈区转到静态区，延长生命周期
+	
+
+30.在驱动调试过程中遇到过oops没？你是怎么处理的？
+
+	
+
+31.ioctl和unlocked_ioctl有什么区别？
+	ioctl变为unlocked_ioctl时候有两个地方发生改变：一是返回值类型变为长整型；二是少了第一个参数inode
+
+32.驱动中操作物理绝对地址为什么要先ioremap?
+	映射成虚拟地址
+
+33.设备驱动模型三个重要成员是？platfoem总线的匹配规则是？在具体应用上要不要先注册驱动再注册设备？有先后顺序没？
+	bus,device,driver
+	驱动与设备的ID相同时，匹配成功
+	没有先后顺序
+	
+34.内核函数mmap的实现原理，机制？
+	在内存映射的过程中，并没有实际的数据拷贝，文件没有被载入内存，只是逻辑上被放入了内存，具体到代码，就是建立并初始化了相关的数据结构，所以效率很高
+	
+
+35.在Linux C中，ls这个命令是怎么被执行的?
+	
+	
+36.uboot是如何引导内核？
+	初始化异常向量表
+	设置工作模式，关闭中断
+	关闭MMU，使能icahe
+	初始化系统时钟
+	初始化内存
+	初始化串口
+	设置栈，初始化C语言提供环境
+	清BSS段
+	初始化外设(flash，网卡，中断等)
+	引导内核
+
+37.请从网卡、LCD驱动器、传感器芯片中选择一个或者2个（可以以具体的芯片为例），对下面的问题做答： 
+	1)如果是外部扩展芯片，请说出你用的芯片的型号
+		DM9000/MPU6050
+	2)画出上题中你选定相应硬件模块与CPU的主要引脚连线
+		MPU6050:时钟线和数据线
+		DM9000：
+	3) 编写上题中你选定相应硬件模块相应LINUX驱动的流程？ 
+
+	
+38.platform总线设备及总线设备如何编写？
+	platform_device platform_driver
+	匹配两者的name，匹配成功则驱动OK
+
+39.IIC原理，总线框架，设备编写方法，i2c_msg
+	
+
+40.查看驱动模块中打印信息应该使用什么命令？如何查看内核中已有的字符设备的信息？如何查看正在使用的有哪些中断号？
+	dmesg
+	ls /dev
+	/proc/interupt
+	
+41.中断和轮询哪个效率高？怎样决定是采用中断方式还是采用轮询方式去实现驱动？
+	中断高
+
+	
+	
+42、IIC,SPI,串口的区别？
+
+	
+43、输入子系统分为哪几层？如何编写设备驱动？
+
+
+44、TCP和udp的区别？
+
+		
+45、用变量a给出下面的定义
+				a) 一个整型数(An integer)
+					int a
+				b)一个指向整型数的指针(A pointer to an integer)
+					int *a
+				c)一个指向指针的的指针，它指向的指针是指向一个整型数（ A pointer to a pointer to an intege）r 
+					int **a
+				d)一个有10个整型数的数组（ An array of 10 integers） 
+					int a[10]
+			☆☆	e) 一个有10个指针的数组，该指针是指向一个整型数的。（An array of 10 pointers to integers） 
+					int *a[10]
+			☆☆	f) 一个指向有10个整型数数组的指针（ A pointer to an array of 10 integers） 
+					int (*a)[10]
+			☆☆	g) 一个指向函数的指针，该函数有一个整型参数并返回一个整型数（A pointer to a function that takes an integer as an argument and returns an integer） 
+						int (*p)(int)
+			☆☆	h)一个有10个指针的数组，该指针指向一个函数，该函数有一个整型参数并返回一个整型数（ An array of ten pointers tofunctions that take an integer argument and return an integer ）
+					);
+					int *p[10](int)
+46、中断是嵌入式系统中重要的组成部分，这导致了很多编译开发商提供一种扩展—让标准C支持中断。具代表事实是，产生了一个新的关键字__interrupt。下面的代码就使用了__interrupt关键字去定义了一个中断服务子程序(ISR)，请评论一下这段代码的。
+
+			__interrupt double compute_area (double radius) 
+			{
+			double area = PI * radius * radius;
+			printf("\nArea = %f", area);
+			return area;
+			}				
+							  
+		
+
+   
+   
+     

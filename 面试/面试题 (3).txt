@@ -1,0 +1,401 @@
+1 、如何自动创建设备文件？
+   mknod  /dev/led  c    主设备号  次设备号
+   
+   class_create
+      sys/class/目录
+   device_create
+       sys/class/目录/设备文件  
+	   
+	dev 
+
+	etc/init.d/rcS   mdev  -s  
+	
+mdev  -s: 
+    自动扫描类设备目录下的文件，如果在设备文件下含有名为dev的文件，且文件中
+	包含的是设备号的信息，则mdev就会利用这些信息在dev目录下创建设备文件.
+	                                mknod  
+	
+	
+   
+2、led驱动编写有几种方式？
+     字符设备驱动
+         	 
+	 sysfs
+	 
+	 在编写驱动程序时，将驱动和硬件分离，引入platform总线
+	 
+	 
+	 
+	
+3、如何实现http服务器？
+    http：
+	   创建套接字
+	   绑定
+	   设置监听
+	   等待连接
+	   open（"html"）；
+	   read(buf)
+	   send
+	   
+	
+	
+	
+
+4、如何编写守护进程，简述syslog的作用？
+   
+	
+5、bootloader和uboot的区别？
+
+	
+
+6、如何移植uboot？
+
+		
+		
+7、传感器驱动如何编写？
+    bma250.c  重力加速度传感器
+	module_init(BMA250_init);
+	      i2c_add_driver(&bma250_driver);
+     
+   bma250_probe:
+        分配空间
+      data = kzalloc(sizeof(struct bma250_data), GFP_KERNEL);
+	  从i2c_client获取硬件信息，填充data
+      i2c_set_clientdata(client, data);
+	  data->bma250_client = client; 
+       初始化锁
+      mutex_init(&data->value_mutex);
+	  mutex_init(&data->mode_mutex);
+	  mutex_init(&data->enable_mutex);
+	  
+      设置参数	  
+	 bma250_set_bandwidth(client, BMA250_BW_SET);
+	 bma250_set_range(client, BMA250_RANGE_SET);
+	 
+	 初始化工作队列,当调度工作队列，工作队列的处理函数就会被执行
+	 INIT_DELAYED_WORK(&data->work, bma250_work_func);
+	 
+	 设置值,enable  = 0,最大的延时时间 200ms 
+     atomic_set(&data->delay, BMA250_MAX_DELAY);
+	 atomic_set(&data->enable, 0);
+	 
+	   初始化input_dev，上报数据
+	 err = bma250_input_init(data);
+	      dev = input_allocate_device();
+		  dev->name = SENSOR_NAME;
+          dev->id.bustype = BUS_I2C; 
+
+            input_set_capability(dev, EV_ABS, ABS_MISC);
+			input_set_abs_params(dev, ABS_X, ABSMIN_2G, ABSMAX_2G, 0, 0);
+			input_set_abs_params(dev, ABS_Y, ABSMIN_2G, ABSMAX_2G, 0, 0);
+			input_set_abs_params(dev, ABS_Z, ABSMIN_2G, ABSMAX_2G, 0, 0);
+			input_set_drvdata(dev, bma250);
+
+	        err = input_register_device(dev);	
+		创建属性文件，range，bandwidth，mode，value，delay，enable	
+     sysfs_create_group
+	 
+	bma250_set_enable(&client->dev,1); 
+	 
+bma250_set_enable:  enable  =1
+    int pre_enable = atomic_read(&bma250->enable);	读取enable的值  pre_enable=0 
+	if (enable) {
+		if (pre_enable ==0) {
+		     设置模式，正常模式
+			bma250_set_mode(bma250->bma250_client, 
+							BMA250_MODE_NORMAL);
+		    延时调度工作队列的下半部，200ms后工作队列的下半部就会被执行	bma250_work_func				
+			schedule_delayed_work(&bma250->work,
+				msecs_to_jiffies(atomic_read(&bma250->delay))); 200ms
+			atomic_set(&bma250->enable, 1);
+			
+			
+bma250_work_func:
+     获取延时时间    200ms 
+   unsigned long delay = msecs_to_jiffies(atomic_read(&bma250->delay));
+     采集传感器的数据(x,y,z)
+	bma250_read_accel_xyz(bma250->bma250_client, &acc);	
+
+     上报x，y,z数据
+    input_report_abs(bma250->input, ABS_X, acc.x);
+	input_report_abs(bma250->input, ABS_Y, acc.y);
+	input_report_abs(bma250->input, ABS_Z, acc.z);	
+         同步,告诉核心层驱动已经上报了一个完整的事件	
+ 		input_sync(bma250->input);  
+		
+    bma250->value = acc;
+   延时调度工作队列处理函数
+   schedule_delayed_work(&bma250->work, delay);	
+   
+   
+ cat  delay:
+  bma250_delay_show 
+      return sprintf(buf, "%d\n", atomic_read(&bma250->delay));
+ echo  100  >delay  
+    bma250_delay_store 
+	   error = strict_strtoul(buf, 10, &data);
+	     设置延时时间  100ms
+       atomic_set(&bma250->delay, (unsigned int) data);
+	   
+cat  enable:
+  bma250_enable_show
+    return sprintf(buf, "%d\n", atomic_read(&bma250->enable));  1
+echo  0  > enable
+  bma250_enable_store
+   error = strict_strtoul(buf, 10, &data);
+   if ((data == 0)||(data==1)) {
+		bma250_set_enable(dev,data);
+	}
+    bma250_set_enable(dev,data);   0
+	int pre_enable = atomic_read(&bma250->enable);1
+	
+	bma250_set_mode(bma250->bma250_client, 
+							BMA250_MODE_SUSPEND); 挂起
+			cancel_delayed_work_sync(&bma250->work);  删除工作队列，工作队列的处理函数不会执行
+			  数据就不会采集
+			atomic_set(&bma250->enable, 0);
+
+
+cat  value:
+  bma250_value_show			
+	 acc_value = bma250->value;	 存放x，y，z
+     打印传感器的数据
+	 return sprintf(buf, 
+	 "%d %d %d\n", acc_value.x, acc_value.y,
+			acc_value.z);
+			
+			
+  IIC+input+sysfs  
+   iic采集数据
+   input：上报数据
+   sysfs：设置属性
+            delay  enable  value  
+			
+			
+			
+
+			
+8、BL0，BL1，BL2的作用？
+  BL0:厂商固化的代码
+      关中断
+	  看门狗
+	  MMU
+	  时钟
+	  获取启动方式
+	  
+  BL1:uboot的第一阶段的代码  SRAM/IRAM
+  BL2:uboo第二阶段代码   DRAM
+  
+  
+  BL3:
+  
+  
+
+		
+
+9、exynos4412  时钟 APLL,MPLL,VPLL的区别？
+      给armcore  或者外设提供时钟
+		
+10、arm中icache的作用
+     提供cpu的执行效率
+
+
+11、uboot启动流程？
+
+
+
+12、标准IO和文件IO的区别？
+	
+
+	
+13、select，poll，epoll的区别？
+
+
+		
+14、sysfs主要的作用？
+    将内核的数据结构及其属性导出到用户空间的方法
+	
+	
+15、内核为什么要引入平台总线？
+    驱动和硬件分离
+	
+	
+16、字符设备驱动实现流程？
+  申请设备号
+  注册设备号
+  初始化cdev
+    cdev_init();
+  将cdev添加到系统中
+     
+	
+17、内核中select和异步通知的区别？
+
+	
+
+18、const  int  a，int  const  a， const  int  * a，  const  int  const  * a；的区别？
+	
+
+19、inline的作用？
+     提供程序的执行效率
+	
+
+	
+20、volatile 的作用？
+
+	
+
+21 、#ifndef  define   #endif  的作用 
+	
+
+	
+22、设备树中
+   reg   interrupt-parent  中断父节点
+   interrupts 中断源  status 状态  disable  okay   pinctl-0    pinctl-name 指定引脚的状态  compatible 表示什么？
+   reg：内存的地址信息
+   
+23.进程和线程区别？
+	
+
+		
+24.fork和vfork的区别？
+	
+
+		
+25.进程间通信方式有几种？每一种的特点？
+
+
+	
+26.字符型驱动设备你是怎么创建设备文件的，就是/dev/下面的设备文件，供上层应用程序打开使用的文件？
+       
+	   
+	   
+27.insmod 一个驱动模块，会执行模块中的哪个函数？rmmod呢？这两个函数在设计上要注意哪些？遇到过卸载驱动出现异常没？是什么问题引起的？
+	
+
+	
+28.static作用？
+	
+	
+
+30.在驱动调试过程中遇到过oops没？你是怎么处理的？
+   int  *  ptr  = 0xff；
+   *ptr  = NULL；
+   
+   1、将地址转换为行号
+       addr2line
+   2、反汇编
+
+	
+
+31.ioctl和unlocked_ioctl有什么区别？
+    linux.2.6.35
+	    fops
+		  ioctl(inode)
+		  unlocked_ioctl
+		  
+   fops  
+       unlocked_ioctl
+
+32.驱动中操作物理绝对地址为什么要先ioremap?
+     内核启动已经使能MMU,所以虚拟地址
+
+33.设备驱动模型三个重要成员是？platfoem总线的匹配规则是？在具体应用上要不要先注册驱动再注册设备？有先后顺序没？
+      设备  驱动   总线
+	
+34.内核函数mmap的实现原理，机制？
+    把文件映射到内存中
+	数据吞吐量比较大，使用mmap
+	   音频，camera，lcd  
+	
+
+	
+
+35.在Linux C中，ls这个命令是怎么被执行的?
+
+	
+36.uboot是如何引导内核？
+   bootcmd
+
+	
+
+37.请从网卡、LCD驱动器、传感器芯片中选择一个或者2个（可以以具体的芯片为例），对下面的问题做答： 
+	1)如果是外部扩展芯片，请说出你用的芯片的型号
+		DM9000/MPU6050
+	2)画出上题中你选定相应硬件模块与CPU的主要引脚连线
+		MPU6050:时钟线和数据线
+		DM9000：
+	3) 编写上题中你选定相应硬件模块相应LINUX驱动的流程？ 
+
+	
+38.platform总线设备及总线设备如何编写？
+   驱动：platfrom_driver
+   设备：platform_device
+   
+
+39.IIC原理，总线框架，设备编写方法，i2c_msg
+
+     IIC时序
+	 
+
+40.查看驱动模块中打印信息应该使用什么命令？如何查看内核中已有的字符设备的信息？如何查看正在使用的有哪些中断号？
+    dmesg                                       cat  /proc/devices      cat  /proc/interrupts
+	
+41.中断和轮询哪个效率高？怎样决定是采用中断方式还是采用轮询方式去实现驱动？
+     这种说法是片面的，应该看请求的频率
+	 请求频率快：轮询
+	         慢： 中断 
+	
+	
+42、IIC,SPI,串口的区别？
+    同步：
+	异步：
+	半双工：
+	全双工：
+	传输速率：
+
+	
+43、输入子系统分为哪几层？如何编写设备驱动？
+   三层：
+      事件处理层
+	  核心层
+	  设备驱动层    
+	  
+	  
+	  
+	  
+
+
+44、TCP和udp的区别？
+
+		
+45、用变量a给出下面的定义
+				a) 一个整型数(An integer)
+					
+				b)一个指向整型数的指针(A pointer to an integer)
+					
+				c)一个指向指针的的指针，它指向的指针是指向一个整型数（ A pointer to a pointer to an intege）r 
+					
+				d)一个有10个整型数的数组（ An array of 10 integers） 
+					
+			☆☆	e) 一个有10个指针的数组，该指针是指向一个整型数的。（An array of 10 pointers to integers） 
+					
+			☆☆	f) 一个指向有10个整型数数组的指针（ A pointer to an array of 10 integers） 
+					
+			☆☆	g) 一个指向函数的指针，该函数有一个整型参数并返回一个整型数（A pointer to a function that takes an integer as an argument and returns an integer） 
+						
+			☆☆	h)一个有10个指针的数组，该指针指向一个函数，该函数有一个整型参数并返回一个整型数（ An array of ten pointers tofunctions that take an integer argument and return an integer ）
+					);
+46、中断是嵌入式系统中重要的组成部分，这导致了很多编译开发商提供一种扩展—让标准C支持中断。具代表事实是，产生了一个新的关键字__interrupt。下面的代码就使用了__interrupt关键字去定义了一个中断服务子程序(ISR)，请评论一下这段代码的。
+
+			__interrupt double compute_area (double radius) 
+			{
+			double area = PI * radius * radius;
+			printf("\nArea = %f", area);
+			return area;
+			}				
+							  
+		
+
+   
+   
+     
